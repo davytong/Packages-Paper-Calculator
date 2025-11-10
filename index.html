@@ -7,44 +7,35 @@
     <style>
       body {
         font-family: "Segoe UI", sans-serif;
-        background: linear-gradient(135deg, #f0f4ff, #e0f7fa);
-        margin: 0;
-        padding: 10px;
+        margin: 10px;
+        background: #eef2f6;
       }
       .container {
-        max-width: 100%;
+        max-width: 1000px;
         margin: auto;
         background: #fff;
         padding: 15px;
-        border-radius: 12px;
-        box-shadow: 0 5px 12px rgba(0, 0, 0, 0.1);
+        border-radius: 10px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
       }
       h2 {
         text-align: center;
         color: #0d47a1;
-        font-size: 22px;
-        margin-bottom: 15px;
-      }
-      .table-wrapper {
-        width: 100%;
-        margin-bottom: 15px;
-        overflow-x: auto;
       }
       table {
         width: 100%;
         border-collapse: collapse;
+        margin-bottom: 15px;
       }
       th,
       td {
-        padding: 8px;
+        border: 1px solid #ccc;
         text-align: center;
-        border-bottom: 1px solid #ddd;
-        font-size: 14px;
+        padding: 6px;
       }
       th {
-        background: linear-gradient(90deg, #0d47a1, #1976d2);
+        background: #0d47a1;
         color: #fff;
-        font-weight: 600;
       }
       tr:nth-child(even) {
         background: #f1f9ff;
@@ -54,52 +45,14 @@
       }
       input,
       select {
+        padding: 4px;
+        font-size: 14px;
         border-radius: 5px;
-        border: 1px solid #ccc;
-        font-size: 14px;
-        transition: all 0.2s;
-        padding: 5px;
       }
-      input:focus,
-      select:focus {
-        border-color: #42a5f5;
-        box-shadow: 0 0 6px rgba(66, 165, 245, 0.3);
-        outline: none;
-      }
-      .note {
-        color: #e53935;
-        text-align: center;
-        margin: 6px 0;
-        font-weight: 500;
-        font-size: 14px;
-      }
-      #resultTable h3 {
+      #printingCapacity {
+        font-weight: bold;
+        margin-bottom: 10px;
         color: #0d47a1;
-        font-size: 18px;
-        text-align: center;
-        margin-bottom: 8px;
-      }
-      .pageQty {
-        width: 50px;
-        font-size: 13px;
-      }
-      .paperMaterial {
-        width: 70px;
-        font-size: 14px;
-      }
-      @media (max-width: 480px) {
-        input.pageQty {
-          width: 100%;
-          margin-bottom: 5px;
-        }
-        .select.select-type {
-          width: 150%;
-          margin-bottom: 5px;
-        }
-        select.paperMaterial {
-          width: 150%;
-          margin-bottom: 5px;
-        }
       }
     </style>
   </head>
@@ -107,24 +60,14 @@
     <div class="container">
       <h2>📄 Paper Package Calculator</h2>
 
-      <div class="table-wrapper">
-        <table>
-          <tr>
-            <td><label>Number of Books:</label></td>
-            <td colspan="3">
-              <input
-                type="number"
-                id="numBooks"
-                placeholder="Enter number of books"
-                oninput="createBookTable()"
-              />
-            </td>
-          </tr>
-        </table>
-      </div>
+      <label>Number of Books: </label>
+      <input
+        type="number"
+        id="numBooks"
+        oninput="createBookTable()"
+      /><br /><br />
 
-      <div id="bookTableContainer" class="table-wrapper"></div>
-      <div class="note" id="noteMsg"></div>
+      <div id="bookTableContainer"></div>
 
       <div id="resultTable" style="display: none">
         <h3>📊 Calculation Result</h3>
@@ -132,7 +75,7 @@
           <thead>
             <tr>
               <th>Paper + Material</th>
-              <th>Total Pages</th>
+              <th>Total Sheets</th>
               <th>Total Packages</th>
               <th>Total Packages (inc%)</th>
             </tr>
@@ -140,47 +83,71 @@
           <tbody id="resultBody"></tbody>
         </table>
       </div>
+
+      <div id="summaryInfo" style="display: none">
+        <div id="printingCapacity">
+          🖨️ Printing Capacity: 60,000 pages/day (30,000 sheets/day as A4)
+        </div>
+      </div>
+
+      <div id="summaryTable" style="display: none">
+        <h3>📋 Summary</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Material</th>
+              <th>Total Sheets</th>
+              <th>Total Packages</th>
+              <th>Total Qty Book</th>
+              <th>Estimated Days</th>
+            </tr>
+          </thead>
+          <tbody id="summaryBody"></tbody>
+        </table>
+      </div>
     </div>
 
     <script>
+      function formatNumber(num) {
+        return num.toLocaleString();
+      }
+
       function createBookTable() {
         const num = parseInt(document.getElementById("numBooks").value);
         const container = document.getElementById("bookTableContainer");
         container.innerHTML = "";
         if (isNaN(num) || num <= 0) return;
 
-        let html = `<table id="bookTable"><thead>
-      <tr><th>Book #</th><th>Pages</th><th>Qty</th><th>Type</th><th>Material</th><th>Total</th></tr>
-      </thead><tbody>`;
+        let html = `<table>
+    <thead><tr>
+      <th>Book #</th><th>Pages</th><th>Qty</th><th>Paper</th><th>Material</th><th>Total Sheets</th>
+    </tr></thead><tbody>`;
 
         for (let i = 1; i <= num; i++) {
           html += `<tr>
       <td>${i}</td>
-      <td><input type="number" id="pages${i}" class="pageQty" placeholder="0" oninput="updateCalculation()"></td>
-      <td><input type="number" id="qty${i}" class="pageQty" placeholder="0" oninput="updateCalculation()"></td>
-      <td>
-        <select id="paper${i}" class="paperMaterial select-type" onchange="updateCalculation()">
-          <option value="A3">A3</option>
-          <option value="A4">A4</option>
-        </select>
-      </td>
-
-      <td><select id="material${i}" class="paperMaterial" onchange="updateCalculation()"><option value="GL">GL</option><option value="WF">WF</option><option value="MT">MT</option></select></td>
+      <td><input type="number" id="pages${i}" oninput="updateCalculation()"></td>
+      <td><input type="number" id="qty${i}" oninput="updateCalculation()"></td>
+      <td><select id="paper${i}" onchange="updateCalculation()"><option value="A3">A3</option><option value="A4">A4</option></select></td>
+      <td><select id="material${i}" onchange="updateCalculation()"><option value="GL">GL</option><option value="WF">WF</option><option value="MT">MT</option></select></td>
       <td id="total${i}">0</td>
-      </tr>`;
+    </tr>`;
         }
         html += "</tbody></table>";
         container.innerHTML = html;
-        updateCalculation();
       }
+
       function updateCalculation() {
         const numBooks = parseInt(document.getElementById("numBooks").value);
         const resultBody = document.getElementById("resultBody");
         const resultTable = document.getElementById("resultTable");
+        const summaryBody = document.getElementById("summaryBody");
+        const summaryTable = document.getElementById("summaryTable");
+        const summaryInfo = document.getElementById("summaryInfo");
         if (isNaN(numBooks) || numBooks <= 0) return;
 
         const totals = {};
-        let totalBooksQty = 0; // ✅ sum of qty
+        let totalBooksQty = 0;
 
         for (let i = 1; i <= numBooks; i++) {
           const pages = parseInt(
@@ -190,95 +157,146 @@
           const paper = document.getElementById("paper" + i).value;
           const material = document.getElementById("material" + i).value;
 
-          totalBooksQty += qty; // add qty to total
+          totalBooksQty += qty;
 
-          let subtotal = pages * qty;
-          document.getElementById("total" + i).innerText = subtotal;
+          const sheets = Math.ceil(pages / 2) * qty; // 2 pages = 1 sheet
+          document.getElementById("total" + i).innerText = `${formatNumber(
+            sheets
+          )} (${paper})`;
 
           const key = paper + "-" + material;
-          if (!totals[key]) totals[key] = { pages: 0 };
-          totals[key].pages += subtotal;
+          if (!totals[key])
+            totals[key] = {
+              sheets: 0,
+              qty: 0,
+              paper: paper,
+              material: material,
+            };
+          totals[key].sheets += sheets;
+          totals[key].qty += qty;
         }
 
         resultBody.innerHTML = "";
 
-        // ✅ Calculate normal papers
         for (const key in totals) {
-          const [paper, material] = key.split("-");
-          const totalPages = totals[key].pages;
-
+          const { sheets, paper, material, qty } = totals[key];
           let cutPerSheet = paper === "A3" ? 4 : 8;
           let sheetsPerPack =
             material === "GL" ? 100 : material === "WF" ? 500 : 250;
-
-          const totalOriginalSheets = totalPages / cutPerSheet;
+          const totalOriginalSheets = sheets / cutPerSheet;
           const totalPacks = totalOriginalSheets / sheetsPerPack;
-
           const fraction = +(totalPacks % 1).toFixed(2);
           let extraPercent =
             fraction === 0.25 || fraction === 0.5 || fraction === 0.75
               ? 0.1
               : 0.2;
-
-          let totalDecision = Math.ceil(totalPacks * (1 + extraPercent));
-
-          // Display like "0.25 = 1"
+          const totalDecision = Math.ceil(totalPacks * (1 + extraPercent));
           let displayOriginal = totalPacks.toFixed(2);
           if (totalPacks < 1 || !Number.isInteger(totalPacks))
             displayOriginal += " = " + Math.ceil(totalPacks);
 
-          resultBody.innerHTML += `
-      <tr>
-        <td>${key}</td>
-        <td>${totalPages}</td>
-        <td>${displayOriginal}</td>
-        <td>${totalDecision}</td>
-      </tr>`;
+          resultBody.innerHTML += `<tr>
+      <td>${key}</td>
+      <td>${formatNumber(sheets)} (${paper})</td>
+      <td>${formatNumber(parseInt(displayOriginal))}</td>
+      <td>${formatNumber(totalDecision)}</td>
+    </tr>`;
         }
 
-        // ✅ Calculate cover (GL A3)
+        // Cover GL
         let totalCoverSheets = 0;
         for (let i = 1; i <= numBooks; i++) {
           const material = document.getElementById("material" + i).value;
           const qty = parseInt(document.getElementById("qty" + i)?.value || 0);
-          if (material !== "GL" && qty > 0) totalCoverSheets += qty; // 1 sheet per book
+          if (material !== "GL" && qty > 0) totalCoverSheets += qty;
         }
-
         if (totalCoverSheets > 0) {
-          const cutPerSheet = 4; // A3
-          const sheetsPerPack = 100;
-          const totalOriginalSheets = totalCoverSheets / cutPerSheet;
-          const totalPacks = totalOriginalSheets / sheetsPerPack;
-
-          const fraction = +(totalPacks % 1).toFixed(2);
+          const totalOriginalSheets = totalCoverSheets / 4 / 100;
+          const fraction = +(totalOriginalSheets % 1).toFixed(2);
           let extraPercent =
             fraction === 0.25 || fraction === 0.5 || fraction === 0.75
               ? 0.1
               : 0.2;
-          let totalDecision = Math.ceil(totalPacks * (1 + extraPercent));
+          const totalDecision = Math.ceil(
+            totalOriginalSheets * (1 + extraPercent)
+          );
 
-          let displayOriginal = totalPacks.toFixed(2);
-          if (totalPacks < 1 || !Number.isInteger(totalPacks))
-            displayOriginal += " = " + Math.ceil(totalPacks);
-
-          resultBody.innerHTML += `
-      <tr>
-        <td>A3-GL (Cover)</td>
-        <td>${totalCoverSheets}</td>
-        <td>${displayOriginal}</td>
-        <td>${totalDecision}</td>
-      </tr>`;
+          resultBody.innerHTML += `<tr>
+      <td>GL (Cover)</td>
+      <td>${formatNumber(totalCoverSheets)} (A3)</td>
+      <td>${formatNumber(totalOriginalSheets.toFixed(2))}</td>
+      <td>${formatNumber(totalDecision)}</td>
+    </tr>`;
         }
 
-        // ✅ Add total qty of books at the bottom
-        resultBody.innerHTML += `
-    <tr style="font-weight: bold; background: #eef;">
-      <td colspan="2">Total Books Qty</td>
-      <td colspan="2">${totalBooksQty}</td>
-    </tr>`;
+        resultBody.innerHTML += `<tr style="font-weight:bold;background:#eef;"><td colspan="2">Total Books Qty</td><td colspan="2">${formatNumber(
+          totalBooksQty
+        )}</td></tr>`;
+        resultTable.style.display =
+          Object.keys(totals).length > 0 || totalCoverSheets > 0
+            ? "block"
+            : "none";
 
-        if (Object.keys(totals).length > 0 || totalCoverSheets > 0)
-          resultTable.style.display = "block";
+        // Show printing capacity info
+        summaryInfo.style.display =
+          Object.keys(totals).length > 0 || totalCoverSheets > 0
+            ? "block"
+            : "none";
+
+        // Summary
+        const summary = {};
+        for (const key in totals) {
+          const { sheets, qty, paper, material } = totals[key];
+          const keyName = paper + "-" + material;
+          if (!summary[keyName])
+            summary[keyName] = { sheets: 0, packages: 0, qty: 0 };
+          summary[keyName].sheets += sheets;
+
+          let cutPerSheet = paper === "A3" ? 4 : 8;
+          let sheetsPerPack =
+            material === "GL" ? 100 : material === "WF" ? 500 : 250;
+          const totalOriginalSheets = sheets / cutPerSheet / sheetsPerPack;
+          const fraction = +(totalOriginalSheets % 1).toFixed(2);
+          let extraPercent =
+            fraction === 0.25 || fraction === 0.5 || fraction === 0.75
+              ? 0.1
+              : 0.2;
+          summary[keyName].packages += Math.ceil(
+            totalOriginalSheets * (1 + extraPercent)
+          );
+          summary[keyName].qty += qty;
+        }
+
+        if (totalCoverSheets > 0) {
+          const keyName = "GL (Cover)";
+          if (!summary[keyName])
+            summary[keyName] = { sheets: 0, packages: 0, qty: 0 };
+          summary[keyName].sheets = totalCoverSheets;
+          const totalOriginalSheets = totalCoverSheets / 4 / 100;
+          const fraction = +(totalOriginalSheets % 1).toFixed(2);
+          let extraPercent =
+            fraction === 0.25 || fraction === 0.5 || fraction === 0.75
+              ? 0.1
+              : 0.2;
+          summary[keyName].packages = Math.ceil(
+            totalOriginalSheets * (1 + extraPercent)
+          );
+          summary[keyName].qty = totalCoverSheets;
+        }
+
+        summaryBody.innerHTML = "";
+        for (const mat in summary) {
+          const { sheets, packages, qty } = summary[mat];
+          let sheetsInA4 = sheets * 1;
+          if (mat.includes("A3")) sheetsInA4 = sheets * 2;
+          const estDays = Math.ceil(sheetsInA4 / 30000);
+          summaryBody.innerHTML += `<tr>
+      <td>${mat}</td><td>${formatNumber(sheets)}</td><td>${formatNumber(
+            packages
+          )}</td><td>${formatNumber(qty)}</td><td>${formatNumber(estDays)}</td>
+    </tr>`;
+        }
+        summaryTable.style.display = "block";
       }
     </script>
   </body>
