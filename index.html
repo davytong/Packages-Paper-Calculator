@@ -180,9 +180,8 @@
         if (isNaN(numBooks) || numBooks <= 0) return;
 
         const totals = {};
-        let totalCoverSheets = 0; // for A3-GL covers
+        let totalBooksQty = 0; // ✅ sum of qty
 
-        // 1️⃣ Calculate pages and cover sheets
         for (let i = 1; i <= numBooks; i++) {
           const pages = parseInt(
             document.getElementById("pages" + i)?.value || 0
@@ -191,42 +190,39 @@
           const paper = document.getElementById("paper" + i).value;
           const material = document.getElementById("material" + i).value;
 
-          const subtotal = pages * qty;
+          totalBooksQty += qty; // add qty to total
+
+          let subtotal = pages * qty;
           document.getElementById("total" + i).innerText = subtotal;
 
           const key = paper + "-" + material;
           if (!totals[key]) totals[key] = { pages: 0 };
           totals[key].pages += subtotal;
-
-          // Cover: WF or MT needs 1 A3-GL sheet per qty
-          if (material !== "GL") totalCoverSheets += qty;
         }
 
         resultBody.innerHTML = "";
 
-        // 2️⃣ Calculate main material packages
+        // ✅ Calculate normal papers
         for (const key in totals) {
           const [paper, material] = key.split("-");
           const totalPages = totals[key].pages;
 
-          const cutPerSheet = paper === "A3" ? 4 : 8;
-
+          let cutPerSheet = paper === "A3" ? 4 : 8;
           let sheetsPerPack =
             material === "GL" ? 100 : material === "WF" ? 500 : 250;
 
           const totalOriginalSheets = totalPages / cutPerSheet;
-          let totalPacks = totalOriginalSheets / sheetsPerPack;
+          const totalPacks = totalOriginalSheets / sheetsPerPack;
 
-          // Decide extra % for purchase
-          const fraction = totalPacks % 1;
+          const fraction = +(totalPacks % 1).toFixed(2);
           let extraPercent =
             fraction === 0.25 || fraction === 0.5 || fraction === 0.75
               ? 0.1
               : 0.2;
 
-          const totalDecision = Math.ceil(totalPacks * (1 + extraPercent));
+          let totalDecision = Math.ceil(totalPacks * (1 + extraPercent));
 
-          // Display original fraction + decision
+          // Display like "0.25 = 1"
           let displayOriginal = totalPacks.toFixed(2);
           if (totalPacks < 1 || !Number.isInteger(totalPacks))
             displayOriginal += " = " + Math.ceil(totalPacks);
@@ -240,26 +236,46 @@
       </tr>`;
         }
 
-        // 3️⃣ Calculate cover packages separately
+        // ✅ Calculate cover (GL A3)
+        let totalCoverSheets = 0;
+        for (let i = 1; i <= numBooks; i++) {
+          const material = document.getElementById("material" + i).value;
+          const qty = parseInt(document.getElementById("qty" + i)?.value || 0);
+          if (material !== "GL" && qty > 0) totalCoverSheets += qty; // 1 sheet per book
+        }
+
         if (totalCoverSheets > 0) {
           const cutPerSheet = 4; // A3
-          const sheetsPerPack = 400; // 1 pack = 400 sheets
-          let totalPacks = totalCoverSheets / cutPerSheet / sheetsPerPack;
-          totalPacks *= 1.15; // +15% cover
-          const finalDecision = Math.ceil(totalPacks);
+          const sheetsPerPack = 100;
+          const totalOriginalSheets = totalCoverSheets / cutPerSheet;
+          const totalPacks = totalOriginalSheets / sheetsPerPack;
+
+          const fraction = +(totalPacks % 1).toFixed(2);
+          let extraPercent =
+            fraction === 0.25 || fraction === 0.5 || fraction === 0.75
+              ? 0.1
+              : 0.2;
+          let totalDecision = Math.ceil(totalPacks * (1 + extraPercent));
 
           let displayOriginal = totalPacks.toFixed(2);
           if (totalPacks < 1 || !Number.isInteger(totalPacks))
-            displayOriginal += " = " + finalDecision;
+            displayOriginal += " = " + Math.ceil(totalPacks);
 
           resultBody.innerHTML += `
       <tr>
         <td>A3-GL (Cover)</td>
         <td>${totalCoverSheets}</td>
         <td>${displayOriginal}</td>
-        <td>${finalDecision}</td>
+        <td>${totalDecision}</td>
       </tr>`;
         }
+
+        // ✅ Add total qty of books at the bottom
+        resultBody.innerHTML += `
+    <tr style="font-weight: bold; background: #eef;">
+      <td colspan="2">Total Books Qty</td>
+      <td colspan="2">${totalBooksQty}</td>
+    </tr>`;
 
         if (Object.keys(totals).length > 0 || totalCoverSheets > 0)
           resultTable.style.display = "block";
