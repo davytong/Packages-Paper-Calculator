@@ -85,24 +85,22 @@
         font-size: 13px;
       }
       .paperMaterial {
-        width: 140px;
+        width: 140px; /* Keep for desktop */
         font-size: 14px;
       }
 
+      /* Make Type and Material full width on small screens */
       @media (max-width: 480px) {
-        h2 {
-          font-size: 20px;
-        }
-        table,
-        th,
-        td {
-          font-size: 13px;
-        }
         input.pageQty,
         select.paperMaterial {
           width: 100%;
           margin-bottom: 5px;
         }
+      }
+
+      /* Optional: give Type dropdown slightly wider on all screens */
+      .select-type {
+        width: 80px; /* enough for A3 / A4 */
       }
     </style>
   </head>
@@ -161,7 +159,13 @@
 <td>${i}</td>
 <td><input type="number" id="pages${i}" class="pageQty" placeholder="0" oninput="updateCalculation()"></td>
 <td><input type="number" id="qty${i}" class="pageQty" placeholder="0" oninput="updateCalculation()"></td>
-<td><select id="paper${i}" class="paperMaterial" onchange="updateCalculation()"><option value="A3">A3</option><option value="A4">A4</option></select></td>
+<td>
+  <select id="paper${i}" class="paperMaterial select-type" onchange="updateCalculation()">
+    <option value="A3">A3</option>
+    <option value="A4">A4</option>
+  </select>
+</td>
+
 <td><select id="material${i}" class="paperMaterial" onchange="updateCalculation()"><option value="GL">GL</option><option value="WF">WF</option><option value="MT">MT</option></select></td>
 <td id="total${i}">0</td>
 </tr>`;
