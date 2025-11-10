@@ -11,31 +11,34 @@
         background: #eef2f6;
       }
       .container {
-        max-width: 1000px;
+        max-width: 100%;
         margin: auto;
         background: #fff;
-        padding: 15px;
+        padding: 10px;
         border-radius: 10px;
         box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
       }
       h2 {
         text-align: center;
         color: #0d47a1;
+        font-size: 1.3em;
       }
       table {
         width: 100%;
         border-collapse: collapse;
-        margin-bottom: 15px;
+        margin-bottom: 10px;
+        font-size: 14px;
       }
       th,
       td {
         border: 1px solid #ccc;
         text-align: center;
-        padding: 6px;
+        padding: 4px;
       }
       th {
         background: #0d47a1;
         color: #fff;
+        font-size: 13px;
       }
       tr:nth-child(even) {
         background: #f1f9ff;
@@ -45,14 +48,36 @@
       }
       input,
       select {
-        padding: 4px;
-        font-size: 14px;
+        padding: 3px;
+        font-size: 13px;
         border-radius: 5px;
+        width: 100%;
       }
       #printingCapacity {
         font-weight: bold;
         margin-bottom: 10px;
         color: #0d47a1;
+        font-size: 14px;
+      }
+      .table-wrapper {
+        overflow-x: auto;
+      }
+
+      /* Mobile responsive */
+      @media screen and (max-width: 600px) {
+        h2 {
+          font-size: 1.1em;
+        }
+        input,
+        select {
+          font-size: 12px;
+          padding: 2px;
+        }
+        th,
+        td {
+          font-size: 12px;
+          padding: 3px;
+        }
       }
     </style>
   </head>
@@ -67,9 +92,9 @@
         oninput="createBookTable()"
       /><br /><br />
 
-      <div id="bookTableContainer"></div>
+      <div id="bookTableContainer" class="table-wrapper"></div>
 
-      <div id="resultTable" style="display: none">
+      <div id="resultTable" style="display: none" class="table-wrapper">
         <h3>📊 Calculation Result</h3>
         <table>
           <thead>
@@ -90,7 +115,7 @@
         </div>
       </div>
 
-      <div id="summaryTable" style="display: none">
+      <div id="summaryTable" style="display: none" class="table-wrapper">
         <h3>📋 Summary</h3>
         <table>
           <thead>
@@ -159,7 +184,7 @@
 
           totalBooksQty += qty;
 
-          const sheets = Math.ceil(pages / 2) * qty; // 2 pages = 1 sheet
+          const sheets = Math.ceil(pages / 2) * qty;
           document.getElementById("total" + i).innerText = `${formatNumber(
             sheets
           )} (${paper})`;
@@ -177,7 +202,6 @@
         }
 
         resultBody.innerHTML = "";
-
         for (const key in totals) {
           const { sheets, paper, material, qty } = totals[key];
           let cutPerSheet = paper === "A3" ? 4 : 8;
@@ -237,7 +261,6 @@
             ? "block"
             : "none";
 
-        // Show printing capacity info
         summaryInfo.style.display =
           Object.keys(totals).length > 0 || totalCoverSheets > 0
             ? "block"
@@ -287,8 +310,7 @@
         summaryBody.innerHTML = "";
         for (const mat in summary) {
           const { sheets, packages, qty } = summary[mat];
-          let sheetsInA4 = sheets * 1;
-          if (mat.includes("A3")) sheetsInA4 = sheets * 2;
+          let sheetsInA4 = mat.includes("A3") ? sheets * 2 : sheets;
           const estDays = Math.ceil(sheetsInA4 / 30000);
           summaryBody.innerHTML += `<tr>
       <td>${mat}</td><td>${formatNumber(sheets)}</td><td>${formatNumber(
