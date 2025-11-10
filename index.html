@@ -85,13 +85,16 @@
         font-size: 13px;
       }
       .paperMaterial {
-        width: 140px; /* Keep for desktop */
+        width: 70px; /* Keep for desktop */
         font-size: 14px;
       }
 
       /* Make Type and Material full width on small screens */
       @media (max-width: 480px) {
-        input.pageQty,
+        .select-type {
+          width: 150%;
+          margin-bottom: 5px;
+        }
         select.paperMaterial {
           width: 100%;
           margin-bottom: 5px;
@@ -100,7 +103,7 @@
 
       /* Optional: give Type dropdown slightly wider on all screens */
       .select-type {
-        width: 80px; /* enough for A3 / A4 */
+        width: 200px; /* enough for A3 / A4 */
       }
     </style>
   </head>
