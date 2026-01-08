@@ -352,20 +352,33 @@
           bookRows.push({ title, pages, qty, paper, material, binding, pricePerBook, cardId: `#bookCard${i}` });
         }
 
-        bookRows.sort((a, b) => b.pricePerBook - a.pricePerBook);
-        bookRows.forEach((b, i) => {
-          $(b.cardId).toggleClass("expensive", b.pricePerBook > 50);
-          $("#resultBody").append(`<tr>
-            <td>${i+1}</td>
-            <td>${b.title}</td>
-            <td>${fmtInt(b.pages)}</td>
-            <td>${fmtInt(b.qty)}</td>
-            <td>${b.paper}</td>
-            <td>${b.material}</td>
-            <td>${b.binding}</td>
-            <td>${fmtPrice(b.pricePerBook)}</td>
-          </tr>`);
-        });
+    // Define custom order for Pre levels
+const preOrder = ["Pre2", "Pre3", "Pre4", "Pre5", "Pre6"];
+
+// Sort by Pre level first, then alphabetically by title
+bookRows.sort((a, b) => {
+  // Extract Pre level from title
+  const preA = preOrder.findIndex(p => a.title.includes(p));
+  const preB = preOrder.findIndex(p => b.title.includes(p));
+
+  if (preA !== preB) return preA - preB; // sort by Pre level
+  return a.title.localeCompare(b.title); // then sort alphabetically
+});
+
+bookRows.forEach((b, i) => {
+  $(b.cardId).removeClass("expensive");
+  $("#resultBody").append(`<tr>
+    <td>${i+1}</td>
+    <td>${b.title}</td>
+    <td>${fmtInt(b.pages)}</td>
+    <td>${fmtInt(b.qty)}</td>
+    <td>${b.paper}</td>
+    <td>${b.material}</td>
+    <td>${b.binding}</td>
+    <td>${fmtPrice(b.pricePerBook)}</td>
+  </tr>`);
+});
+
 
         const packsWF = sheetsWF > 0 ? Math.ceil(sheetsWF / PACK_WF_A4) : 0;
         const packsMT = sheetsMT > 0 ? Math.ceil(sheetsMT / PACK_MT_A4) : 0;
@@ -502,3 +515,4 @@
     </script>
   </body>
 </html>
+
