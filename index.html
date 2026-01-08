@@ -268,7 +268,7 @@
     <script>
       const TONER_COST_PER_SHEET = 962 / 90000,
             INSIDE_COST_A4 = 31 / 4000,
-            INSIDE_COST_A3 = 31 / 2000,
+            INSIDE_COST_A3 = 31 / 2000, 
             COVER_COST = 18 / 400,
             LAM_COST = 8 / 400,
             BINDING_COST = 150 / 10000,
@@ -279,7 +279,8 @@
             COVER_PACK = 400;
 
       let history = JSON.parse(localStorage.getItem("paperHistory")) || [];
-      let lastJobHash = "";
+     let lastJobHash = "";
+
 
       const fmtInt = (n) => Number(n).toLocaleString();
       const fmtPrice = (n) => "$" + Number(n).toFixed(2);
@@ -310,7 +311,6 @@
         $("#bookTableContainer").html(html);
       }
 
- 
   // GLOBALS
 let bookRows = [];
 let totalCost = 0;
@@ -443,86 +443,6 @@ $("#btnExportExcel").on("click", function() {
 
 
 
-// Define custom order for Pre levels
-const preOrder = ["Pre2", "Pre3", "Pre4", "Pre5", "Pre6"];
-
-// Sort by binding first, then by Pre level
-bookRows.sort((a, b) => {
-  // Binding order: Perfect first, Staple second
-  const bindOrder = ["Perfect", "Staple"];
-  const bindA = bindOrder.indexOf(a.binding);
-  const bindB = bindOrder.indexOf(b.binding);
-
-  if (bindA !== bindB) return bindA - bindB; // sort by binding first
-
-  // Then sort by Pre level
-  const preA = preOrder.findIndex(p => a.title.includes(p));
-  const preB = preOrder.findIndex(p => b.title.includes(p));
-
-  if (preA !== preB) return preA - preB; // sort by level
-
-  // Finally, sort alphabetically if same binding and level
-  return a.title.localeCompare(b.title);
-});
-
-// Then display in table
-bookRows.forEach((b, i) => {
-  $(b.cardId).removeClass("expensive");
-  $("#resultBody").append(`<tr>
-    <td>${i+1}</td>
-    <td>${b.title}</td>
-    <td>${fmtInt(b.pages)}</td>
-    <td>${fmtInt(b.qty)}</td>
-    <td>${b.paper}</td>
-    <td>${b.material}</td>
-    <td>${b.binding}</td>
-    <td>${fmtPrice(b.pricePerBook)}</td>
-  </tr>`);
-});
-
-
-        const packsWF = sheetsWF > 0 ? Math.ceil(sheetsWF / PACK_WF_A4) : 0;
-        const packsMT = sheetsMT > 0 ? Math.ceil(sheetsMT / PACK_MT_A4) : 0;
-        const packsA3 = sheetsA3 > 0 ? Math.ceil(sheetsA3 / PACK_A3) : 0;
-        const coverPacks = totalCoverSheets > 0 ? Math.ceil(totalCoverSheets / COVER_PACK) : 0;
-
-        const dailyCapacity = getDailyCapacity();
-        const totalDays = Math.ceil(totalA4Pages / dailyCapacity);
-        $("#totalDaysDisplay").text(totalDays);
-
-        if (sheetsWF > 0) $("#packBody").append(`<tr><td>A4-WF</td><td>${fmtInt(sheetsWF)}</td><td>${fmtInt(packsWF)}</td></tr>`);
-        if (sheetsMT > 0) $("#packBody").append(`<tr><td>A4-MT</td><td>${fmtInt(sheetsMT)}</td><td>${fmtInt(packsMT)}</td></tr>`);
-        if (sheetsA3 > 0) $("#packBody").append(`<tr><td>A3-WF</td><td>${fmtInt(sheetsA3)}</td><td>${fmtInt(packsA3)}</td></tr>`);
-        if (totalCoverSheets > 0) $("#packBody").append(`<tr><td>Cover GL</td><td>${fmtInt(totalCoverSheets)}</td><td>${fmtInt(coverPacks)}</td></tr>`);
-
-        const cards = [
-          { title: "Total Books", icon: "fa-solid fa-book", value: fmtInt(totalBooksQty), color: "primary" },
-          { title: "Total Days", icon: "fa-solid fa-clock", value: fmtInt(totalDays), color: "info" },
-          { title: "Total Cost", icon: "fa-solid fa-dollar-sign", value: fmtPrice(totalCost), color: "danger" },
-          { title: "Cover Packs", icon: "fa-solid fa-box", value: fmtInt(coverPacks), color: "warning" }
-        ];
-        if (packsWF > 0) cards.push({ title: "A4 WF Packs", icon: "fa-solid fa-cubes", value: fmtInt(packsWF), color: "success" });
-        if (packsMT > 0) cards.push({ title: "A4 MT Packs", icon: "fa-solid fa-cubes-stacked", value: fmtInt(packsMT), color: "secondary" });
-        if (packsA3 > 0) cards.push({ title: "A3 WF Packs", icon: "fa-solid fa-boxes-stacked", value: fmtInt(packsA3), color: "dark" });
-
-        $("#summaryCards").html("");
-        cards.forEach((c) => {
-          const col = $(`<div class="col-12 col-sm-6 col-md-3 mb-3"></div>`);
-          const card = $(`<div class="card text-white bg-${c.color} h-100 shadow-sm">
-            <div class="card-body text-center">
-              <i class="${c.icon} fa-2x mb-2"></i>
-              <h6 class="card-title fw-bold">${c.title}</h6>
-              <p class="card-text fs-5 fw-bold">${c.value}</p>
-            </div>
-          </div>`);
-          col.append(card);
-          $("#summaryCards").append(col);
-        });
-
-        $("#resultArea").show();
-        if (saveHistory) saveWorkHistory(n, totalBooksQty, totalCost, totalDays, sheetsWF, sheetsMT, sheetsA3, totalCoverSheets, packsWF, packsMT, packsA3, coverPacks, bookRows);
-      }
-
       function saveWorkHistory(n, totalBooksQty, totalCost, totalDays, sheetsWF, sheetsMT, sheetsA3, totalCoverSheets, packsWF, packsMT, packsA3, coverPacks, bookRows) {
         const hash = btoa(bookRows.map(b => `${b.pages}-${b.qty}-${b.paper}-${b.material}`).join("|"));
         if (hash === lastJobHash) return;
@@ -579,14 +499,20 @@ bookRows.forEach((b, i) => {
           if (this.id === "dailyCapacitySlider") $("#dailyCapacityMain").val($(this).val());
           calculateBooks(false);
         });
+        let history = JSON.parse(localStorage.getItem("paperHistory")) || [];
 
-      
+$("#resultBody tr").each(function () {
+  const row = [];
+  $(this).find("td").each(function () {
+    row.push($(this).text());
+  });
+  data.push(row);
+});
+
+
 
         updateHistoryUI();
       });
     </script>
   </body>
 </html>
-
-
-
