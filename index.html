@@ -310,47 +310,138 @@
         $("#bookTableContainer").html(html);
       }
 
-      function calculateBooks(saveHistory = false) {
-        const n = parseInt($("#numBooks").val());
-        if (!n || n < 1) {
-          $("#resultArea").hide();
-          return;
-        }
+ 
+  // GLOBALS
+let bookRows = [];
+let totalCost = 0;
 
-        $("#resultBody,#packBody,#summaryCards").html("");
+function calculateBooks(saveHistory = false) {
+    const n = parseInt($("#numBooks").val());
+    if (!n || n < 1) {
+        $("#resultArea").hide();
+        return;
+    }
 
-        let totalBooksQty = 0, totalCost = 0, totalCoverSheets = 0, totalA4Pages = 0;
-        let sheetsWF = 0, sheetsMT = 0, sheetsA3 = 0;
-        let bookRows = [];
+    // Reset previous results
+    $("#resultBody,#packBody,#summaryCards").html("");
+    bookRows = [];
+    totalCost = 0;
 
-        for (let i = 1; i <= n; i++) {
-          const pages = parseInt($("#pages" + i).val()) || 0;
-          const qty = parseInt($("#qty" + i).val()) || 0;
-          const paper = $("#paper" + i).val();
-          const material = $("#material" + i).val();
-          const title = $("#title" + i).val() || `Book ${i}`;
-          const binding = paper === "A4" ? "Perfect" : "Staple";
-          $("#binding" + i).val(binding);
+    let totalBooksQty = 0, totalCoverSheets = 0, totalA4Pages = 0;
+    let sheetsWF = 0, sheetsMT = 0, sheetsA3 = 0;
 
-          if (pages <= 0 || qty <= 0) continue;
-          const sheetsPerBook = Math.ceil(pages / 2);
-          const totalSheetsBook = sheetsPerBook * qty;
-          const tonerSheets = paper === "A4" ? sheetsPerBook + 4 : sheetsPerBook * 2 + 4;
-          const tonerCost = tonerSheets * TONER_COST_PER_SHEET;
-          const insideCost = paper === "A4" ? sheetsPerBook * INSIDE_COST_A4 : sheetsPerBook * INSIDE_COST_A3;
-          const pricePerBook = tonerCost + insideCost + COVER_COST + LAM_COST + (binding === "Perfect" ? BINDING_COST : STAPLE_COST);
+    for (let i = 1; i <= n; i++) {
+        const pages = parseInt($(`#pages${i}`).val()) || 0;
+        const qty = parseInt($(`#qty${i}`).val()) || 0;
+        const paper = $(`#paper${i}`).val() || "A4";
+        const material = $(`#material${i}`).val() || "WF";
+        const title = $(`#title${i}`).val() || `Book ${i}`;
+        const binding = paper === "A4" ? "Perfect" : "Staple";
 
-          totalBooksQty += qty;
-          totalCost += pricePerBook * qty;
-          totalCoverSheets += qty;
-          totalA4Pages += paper === "A4" ? totalSheetsBook : totalSheetsBook * 2;
+        $(`#binding${i}`).val(binding);
+        if (pages <= 0 || qty <= 0) continue;
 
-          if (paper === "A4" && material === "WF") sheetsWF += totalSheetsBook;
-          if (paper === "A4" && material === "MT") sheetsMT += totalSheetsBook;
-          if (paper === "A3") sheetsA3 += totalSheetsBook;
+        const sheetsPerBook = Math.ceil(pages / 2);
+        const totalSheetsBook = sheetsPerBook * qty;
+        const tonerSheets = paper === "A4" ? sheetsPerBook + 4 : sheetsPerBook * 2 + 4;
+        const tonerCost = tonerSheets * TONER_COST_PER_SHEET;
+        const insideCost = paper === "A4" ? sheetsPerBook * INSIDE_COST_A4 : sheetsPerBook * INSIDE_COST_A3;
+        const pricePerBook = tonerCost + insideCost + COVER_COST + LAM_COST + (binding === "Perfect" ? BINDING_COST : STAPLE_COST);
 
-          bookRows.push({ title, pages, qty, paper, material, binding, pricePerBook, cardId: `#bookCard${i}` });
-        }
+        totalBooksQty += qty;
+        totalCost += pricePerBook * qty;
+        totalCoverSheets += qty;
+        totalA4Pages += paper === "A4" ? totalSheetsBook : totalSheetsBook * 2;
+
+        if (paper === "A4" && material === "WF") sheetsWF += totalSheetsBook;
+        if (paper === "A4" && material === "MT") sheetsMT += totalSheetsBook;
+        if (paper === "A3") sheetsA3 += totalSheetsBook;
+
+        bookRows.push({ title, pages, qty, paper, material, binding, pricePerBook, cardId: `#bookCard${i}` });
+    }
+
+    // Display table
+    $("#resultBody").html("");
+    bookRows.forEach((b, i) => {
+        $("#resultBody").append(`<tr>
+            <td>${i+1}</td>
+            <td>${b.title}</td>
+            <td>${b.pages}</td>
+            <td>${b.qty}</td>
+            <td>${b.paper}</td>
+            <td>${b.material}</td>
+            <td>${b.binding}</td>
+            <td>${b.pricePerBook.toFixed(2)}</td>
+        </tr>`);
+    });
+
+    // Packs calculation
+    const packsWF = sheetsWF > 0 ? Math.ceil(sheetsWF / PACK_WF_A4) : 0;
+    const packsMT = sheetsMT > 0 ? Math.ceil(sheetsMT / PACK_MT_A4) : 0;
+    const packsA3 = sheetsA3 > 0 ? Math.ceil(sheetsA3 / PACK_A3) : 0;
+    const coverPacks = totalCoverSheets > 0 ? Math.ceil(totalCoverSheets / COVER_PACK) : 0;
+
+    const dailyCapacity = getDailyCapacity();
+    const totalDays = Math.ceil(totalA4Pages / dailyCapacity);
+    $("#totalDaysDisplay").text(totalDays);
+
+    // Summary cards
+    const cards = [
+        { title: "Total Books", value: totalBooksQty, color: "primary" },
+        { title: "Total Days", value: totalDays, color: "info" },
+        { title: "Total Cost", value: totalCost.toFixed(2), color: "danger" },
+        { title: "Cover Packs", value: coverPacks, color: "warning" }
+    ];
+    if (packsWF > 0) cards.push({ title: "A4 WF Packs", value: packsWF, color: "success" });
+    if (packsMT > 0) cards.push({ title: "A4 MT Packs", value: packsMT, color: "secondary" });
+    if (packsA3 > 0) cards.push({ title: "A3 WF Packs", value: packsA3, color: "dark" });
+
+    $("#summaryCards").html("");
+    cards.forEach(c => {
+        $("#summaryCards").append(`<div class="col-12 col-sm-6 col-md-3 mb-3">
+            <div class="card text-white bg-${c.color} h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <h6 class="card-title fw-bold">${c.title}</h6>
+                    <p class="card-text fs-5 fw-bold">${c.value}</p>
+                </div>
+            </div>
+        </div>`);
+    });
+
+    $("#resultArea").show();
+
+    if (saveHistory) saveWorkHistory(n, totalBooksQty, totalCost, totalDays, sheetsWF, sheetsMT, sheetsA3, totalCoverSheets, packsWF, packsMT, packsA3, coverPacks, bookRows);
+}
+
+// Export Excel button
+$("#btnExportExcel").on("click", function() {
+    if ($("#resultArea").is(":hidden") || !bookRows.length) {
+        alert("No data to export. Please calculate first.");
+        return;
+    }
+
+    const data = [];
+    data.push(["Print Job Calculation"]);
+    data.push(["Generated:", new Date().toLocaleString()]);
+    data.push([]);
+    data.push(["#", "Title", "Pages", "Qty", "Paper", "Material", "Binding", "Price"]);
+
+    bookRows.forEach((b, i) => {
+        data.push([
+            i+1, b.title, b.pages, b.qty, b.paper, b.material, b.binding, b.pricePerBook
+        ]);
+    });
+
+    data.push([]);
+    data.push(["Total Cost", totalCost]);
+
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Calculation");
+    XLSX.writeFile(wb, "print_job.xlsx");
+});
+
+
 
 // Define custom order for Pre levels
 const preOrder = ["Pre2", "Pre3", "Pre4", "Pre5", "Pre6"];
@@ -489,41 +580,13 @@ bookRows.forEach((b, i) => {
           calculateBooks(false);
         });
 
-        $("#btnExportExcel").on("click", function() {
-          if ($("#resultArea").is(":hidden")) {
-            alert("Please calculate first.");
-            return;
-          }
-          const title = "Print Job";
-          const data = [];
-          data.push([title]);
-          data.push(["Generated:", new Date().toLocaleString()]);
-          data.push([]);
-          data.push(["#", "Title","Pages", "Qty", "Paper", "Material", "Binding", "Price"]);
-
-          $("#resultBody tr").each(function () {
-            const row = [];
-            $(this).find("td").each(function () {
-              row.push($(this).text());
-            });
-            data.push(row);
-          });
-
-          data.push([]);
-          data.push(["Daily Capacity", $("#dailyCapacityMain").val()]);
-          data.push(["Total Days", $("#totalDaysDisplay").text()]);
-
-          const ws = XLSX.utils.aoa_to_sheet(data);
-          const wb = XLSX.utils.book_new();
-          XLSX.utils.book_append_sheet(wb, ws, "Calculation");
-
-          XLSX.writeFile(wb, "print_job.xlsx");
-        });
+      
 
         updateHistoryUI();
       });
     </script>
   </body>
 </html>
+
 
 
