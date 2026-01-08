@@ -352,19 +352,29 @@
           bookRows.push({ title, pages, qty, paper, material, binding, pricePerBook, cardId: `#bookCard${i}` });
         }
 
-    // Define custom order for Pre levels
+// Define custom order for Pre levels
 const preOrder = ["Pre2", "Pre3", "Pre4", "Pre5", "Pre6"];
 
-// Sort by Pre level first, then alphabetically by title
+// Sort by binding first, then by Pre level
 bookRows.sort((a, b) => {
-  // Extract Pre level from title
+  // Binding order: Perfect first, Staple second
+  const bindOrder = ["Perfect", "Staple"];
+  const bindA = bindOrder.indexOf(a.binding);
+  const bindB = bindOrder.indexOf(b.binding);
+
+  if (bindA !== bindB) return bindA - bindB; // sort by binding first
+
+  // Then sort by Pre level
   const preA = preOrder.findIndex(p => a.title.includes(p));
   const preB = preOrder.findIndex(p => b.title.includes(p));
 
-  if (preA !== preB) return preA - preB; // sort by Pre level
-  return a.title.localeCompare(b.title); // then sort alphabetically
+  if (preA !== preB) return preA - preB; // sort by level
+
+  // Finally, sort alphabetically if same binding and level
+  return a.title.localeCompare(b.title);
 });
 
+// Then display in table
 bookRows.forEach((b, i) => {
   $(b.cardId).removeClass("expensive");
   $("#resultBody").append(`<tr>
@@ -515,4 +525,5 @@ bookRows.forEach((b, i) => {
     </script>
   </body>
 </html>
+
 
