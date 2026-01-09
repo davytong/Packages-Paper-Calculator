@@ -148,6 +148,10 @@ function createBookTable(n) {
     $("#bookTableContainer").html(html);
 }
 
+function formatNumber(n) {
+    return n.toLocaleString(); // adds commas
+}
+
 // ===== CALCULATION =====
 function calculateBooks(saveHistory=false){
     const n=parseInt($("#numBooks").val());
@@ -186,7 +190,7 @@ function calculateBooks(saveHistory=false){
     // Display results
     bookRows.forEach((b,i)=>{
         $("#resultBody").append(`<tr>
-            <td>${i+1}</td><td>${b.title}</td><td>${b.pages}</td><td>${b.qty}</td><td>${b.paper}</td><td>${b.material}</td><td>${b.binding}</td><td>$${b.pricePerBook.toFixed(2)}</td>
+            <td>${i+1}</td><td>${b.title}</td><td>${formatNumber(b.pages)}</td><td>${formatNumber(b.qty)}</td><td>${b.paper}</td><td>${b.material}</td><td>${b.binding}</td><td>$${b.pricePerBook.toFixed(2)}</td>
         </tr>`);
     });
 
@@ -200,17 +204,18 @@ function calculateBooks(saveHistory=false){
     $("#totalDaysDisplay").text(totalDays);
 
     $("#packBody").html("");
-    if(sheetsWF>0) $("#packBody").append(`<tr><td>A4-WF</td><td>${sheetsWF}</td><td>${packsWF}</td></tr>`);
-    if(sheetsMT>0) $("#packBody").append(`<tr><td>A4-MT</td><td>${sheetsMT}</td><td>${packsMT}</td></tr>`);
-    if(sheetsA3>0) $("#packBody").append(`<tr><td>A3</td><td>${sheetsA3}</td><td>${packsA3}</td></tr>`);
-    if(totalCoverSheets>0) $("#packBody").append(`<tr><td>Cover GL</td><td>${totalCoverSheets}</td><td>${coverPacks}</td></tr>`);
+    if(sheetsWF>0) $("#packBody").append(`<tr><td>A4-WF</td><td>${formatNumber(sheetsWF)}</td><td>${formatNumber(packsWF)}</td></tr>`);
+    if(sheetsMT>0) $("#packBody").append(`<tr><td>A4-MT</td><td>${formatNumber(sheetsMT)}</td><td>${formatNumber(packsMT)}</td></tr>`);
+    if(sheetsA3>0) $("#packBody").append(`<tr><td>A3</td><td>${formatNumber(sheetsA3)}</td><td>${formatNumber(packsA3)}</td></tr>`);
+    if(totalCoverSheets>0) $("#packBody").append(`<tr><td>Cover GL</td><td>${formatNumber(totalCoverSheets)}</td><td>${formatNumber(coverPacks)}</td></tr>`);
 
-    const cards=[
-        {title:"Total Books",value:totalBooksQty,color:"primary"},
-        {title:"Total Days",value:totalDays,color:"info"},
-        {title:"Total Cost $",value:"$"+totalCost.toFixed(2),color:"danger"},
-        {title:"Cover Packs",value:coverPacks,color:"warning"}
-    ];
+   const cards = [
+    { title: "Total Books", value: formatNumber(totalBooksQty), color: "primary" },
+    { title: "Total Days", value: formatNumber(totalDays), color: "info" },
+    { title: "Total Cost", value: "$" + formatNumber(totalCost.toFixed(2)), color: "danger" }, // keep cost with $ and decimals
+    { title: "Cover Packs", value: formatNumber(coverPacks), color: "warning" }
+];
+
     if(packsWF>0) cards.push({title:"A4 WF Packs",value:packsWF,color:"success"});
     if(packsMT>0) cards.push({title:"A4 MT Packs",value:packsMT,color:"secondary"});
     if(packsA3>0) cards.push({title:"A3 WF Packs",value:packsA3,color:"dark"});
