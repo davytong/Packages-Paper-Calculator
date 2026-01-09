@@ -314,6 +314,9 @@
   // GLOBALS
 let bookRows = [];
 let totalCost = 0;
+// Make these global at the top of your script
+let bookRows = [];
+let totalCost = 0;
 
 function calculateBooks(saveHistory = false) {
     const n = parseInt($("#numBooks").val());
@@ -341,6 +344,7 @@ function calculateBooks(saveHistory = false) {
         $(`#binding${i}`).val(binding);
         if (pages <= 0 || qty <= 0) continue;
 
+        // Calculate cost
         const sheetsPerBook = Math.ceil(pages / 2);
         const totalSheetsBook = sheetsPerBook * qty;
         const tonerSheets = paper === "A4" ? sheetsPerBook + 4 : sheetsPerBook * 2 + 4;
@@ -348,6 +352,7 @@ function calculateBooks(saveHistory = false) {
         const insideCost = paper === "A4" ? sheetsPerBook * INSIDE_COST_A4 : sheetsPerBook * INSIDE_COST_A3;
         const pricePerBook = tonerCost + insideCost + COVER_COST + LAM_COST + (binding === "Perfect" ? BINDING_COST : STAPLE_COST);
 
+        // Update totals
         totalBooksQty += qty;
         totalCost += pricePerBook * qty;
         totalCoverSheets += qty;
@@ -357,10 +362,11 @@ function calculateBooks(saveHistory = false) {
         if (paper === "A4" && material === "MT") sheetsMT += totalSheetsBook;
         if (paper === "A3") sheetsA3 += totalSheetsBook;
 
+        // Save book info
         bookRows.push({ title, pages, qty, paper, material, binding, pricePerBook, cardId: `#bookCard${i}` });
     }
 
-    // Display table
+    // Display book table
     $("#resultBody").html("");
     bookRows.forEach((b, i) => {
         $("#resultBody").append(`<tr>
@@ -375,7 +381,7 @@ function calculateBooks(saveHistory = false) {
         </tr>`);
     });
 
-    // Packs calculation
+    // Calculate packs
     const packsWF = sheetsWF > 0 ? Math.ceil(sheetsWF / PACK_WF_A4) : 0;
     const packsMT = sheetsMT > 0 ? Math.ceil(sheetsMT / PACK_MT_A4) : 0;
     const packsA3 = sheetsA3 > 0 ? Math.ceil(sheetsA3 / PACK_A3) : 0;
@@ -384,6 +390,13 @@ function calculateBooks(saveHistory = false) {
     const dailyCapacity = getDailyCapacity();
     const totalDays = Math.ceil(totalA4Pages / dailyCapacity);
     $("#totalDaysDisplay").text(totalDays);
+
+    // Display Paper Packs table
+    $("#packBody").html(""); // clear table first
+    if (sheetsWF > 0) $("#packBody").append(`<tr><td>A4-WF</td><td>${sheetsWF}</td><td>${packsWF}</td></tr>`);
+    if (sheetsMT > 0) $("#packBody").append(`<tr><td>A4-MT</td><td>${sheetsMT}</td><td>${packsMT}</td></tr>`);
+    if (sheetsA3 > 0) $("#packBody").append(`<tr><td>A3</td><td>${sheetsA3}</td><td>${packsA3}</td></tr>`);
+    if (totalCoverSheets > 0) $("#packBody").append(`<tr><td>Cover GL</td><td>${totalCoverSheets}</td><td>${coverPacks}</td></tr>`);
 
     // Summary cards
     const cards = [
@@ -410,6 +423,7 @@ function calculateBooks(saveHistory = false) {
 
     $("#resultArea").show();
 
+    // Save history if needed
     if (saveHistory) saveWorkHistory(n, totalBooksQty, totalCost, totalDays, sheetsWF, sheetsMT, sheetsA3, totalCoverSheets, packsWF, packsMT, packsA3, coverPacks, bookRows);
 }
 
@@ -516,3 +530,4 @@ $("#resultBody tr").each(function () {
     </script>
   </body>
 </html>
+
